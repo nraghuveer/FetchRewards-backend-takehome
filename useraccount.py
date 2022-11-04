@@ -1,7 +1,7 @@
 from collections import defaultdict
 from heapq import heappush, heappop
 from datetime import datetime
-from typing import Dict, List, TypedDict
+from typing import Dict, List
 from dataclasses import dataclass
 
 class InSufficientPoints(Exception):
@@ -15,7 +15,6 @@ class PayerRecord:
 @dataclass
 class TransactionRecord(PayerRecord):
     ts: datetime
-
     # heapq uses this method compare records
     def __lt__(self, other: 'TransactionRecord') -> bool:
         return self.ts < other.ts
@@ -26,8 +25,10 @@ class UserAccount:
     Abstract DataStructure to add transactions, spend points, and get balance points on a user
     """
     def __init__(self) -> None:
+        # list of all positive transactions
         self._transactions: List[TransactionRecord] = []
-        self._earning_points: Dict[str, int] = defaultdict(int)
+        # points for each payer based that were given as "spent" already (i.e. given as part of add transactions)
+        self._pending_spends: Dict[str, int] = defaultdict(int)
 
     def __add_transaction(self, transac: TransactionRecord):
         """
@@ -40,8 +41,8 @@ class UserAccount:
             return
         if transac.points > 0:
             heappush(self._transactions, transac)
-        else:
-            self._earning_points[transac.payer] += -1 * transac.points
+        else: # this is a spend, add this pending spend
+            self._pending_spends[transac.payer] += -1 * transac.points
 
     def _get_next_transaction_to_spend(self) -> TransactionRecord:
         """Returns the next transaction that we can use to spend.
@@ -55,13 +56,12 @@ class UserAccount:
             raise ValueError("No Transactions!")
 
         oldest = heappop(self._transactions)
-        # if there are any earning points to consider for this payer
-        if oldest.payer in self._earning_points and self._earning_points[oldest.payer] > 0:
-            # e = 100, oldest.points = 10 => get next, change e
-            # e = 10, oldest.points = 100 => set e =0 and return modified oldest
-            removed = min(self._earning_points[oldest.payer], oldest.points)
+        # there are some points that are pending, first remove them and allocate the remaining
+        if oldest.payer in self._pending_spends and self._pending_spends[oldest.payer] > 0:
+            removed = min(self._pending_spends[oldest.payer], oldest.points)
             oldest.points -= removed
-            self._earning_points[oldest.payer] -= removed
+            # update the pending for this payer
+            self._pending_spends[oldest.payer] -= removed
         return oldest
 
     def add(self, new_transactions: List[TransactionRecord]) -> None:
@@ -85,7 +85,7 @@ class UserAccount:
         d: Dict[str, int] = defaultdict(int)
         for transac in self._transactions:
             d[transac.payer] += transac.points
-        for payer, points in self._earning_points.items():
+        for payer, points in self._pending_spends.items():
             d[payer] -= points
         return d
 
@@ -102,7 +102,6 @@ class UserAccount:
         :return: list of records which were used to spend the given points
         :rtype: List[PayerRecord]
         """
-
         if self.total_points() < points:
             raise InSufficientPoints(f"There are no enough points to spend {points} points")
 
@@ -111,14 +110,11 @@ class UserAccount:
             oldest = self._get_next_transaction_to_spend()
             if oldest.points == 0:
                 continue
-            # points = 100, oldest.points=80
-            # points=80, odlest.points=100
             spent = min(points, oldest.points)
             points -= spent
             history.append(PayerRecord(oldest.payer, -spent))
             oldest.points -= spent
+            # if there are any remaining points in the oldest transaction, add them back
             if oldest.points > 0:
                 self.__add_transaction(oldest)
         return history
-
-
