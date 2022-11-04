@@ -1,7 +1,7 @@
 import uvicorn
 from typing import List, Dict, TypedDict
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.openapi.utils import get_openapi
 from useraccount import UserAccount, TransactionRecord, InSufficientPoints
 
@@ -14,19 +14,7 @@ app = FastAPI()
 useracc = UserAccount()
 
 
-def my_schema():
-    openapi_schema = get_openapi(
-        title="Fetch Rewards - BackEnd - TakeHome",
-        version="1.0",
-        description="User Account",
-        routes=app.routes,
-    )
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
-
-
 # ROUTES -> add(PUT), balance(GET), spend(POST)
-
 
 @app.get("/balance", response_model=Dict[str, int])
 def balance() -> Dict[str, int]:
@@ -35,7 +23,10 @@ def balance() -> Dict[str, int]:
 
 @app.put("/add")
 def addTransactions(transactions: List[TransactionRecord]) -> None:
-    useracc.add(transactions)
+    try:
+        useracc.add(transactions)
+    except InSufficientPoints as e:
+        raise HTTPException(status_code=405, content={"message": str(e)})
 
 
 @app.post(

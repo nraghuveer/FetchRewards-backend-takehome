@@ -7,6 +7,7 @@ from typing import Dict, List
 
 class InSufficientPoints(Exception):
     """raised when there are no enough points to spend"""
+
     pass
 
 
@@ -26,6 +27,7 @@ class UserAccount:
     """
     Abstract DataStructure to add transactions, spend points, and get balance points on a user
     """
+
     def __init__(self) -> None:
         # list of all positive transactions
         self._transactions: List[TransactionRecord] = []
