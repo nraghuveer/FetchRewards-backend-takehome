@@ -1,6 +1,7 @@
 from collections import defaultdict
 from heapq import heappush, heappop
 from datetime import datetime
+from pydantic import BaseModel
 from typing import Dict, List
 from dataclasses import dataclass
 
@@ -9,16 +10,25 @@ class InSufficientPoints(Exception):
     pass
 
 @dataclass
-class PayerRecord:
+class PayerRecord(BaseModel):
     payer: str
     points: int
 
 @dataclass
 class TransactionRecord(PayerRecord):
-    ts: datetime
+    timestamp: datetime
     # heapq uses this method compare records
     def __lt__(self, other: 'TransactionRecord') -> bool:
-        return self.ts < other.ts
+        return self.timestamp < other.timestamp
+
+    class Config:
+        schema_extra={"example": [
+            { "payer": "DANNON", "points": 300, "timestamp": "2022-10-31T10:00:00Z" },
+            { "payer": "UNILEVER", "points": 200, "timestamp": "2022-10-31T11:00:00Z" },
+            { "payer": "DANNON", "points": -200, "timestamp": "2022-10-31T15:00:00Z" },
+            { "payer": "MILLER COORS", "points": 10000, "timestamp": "2022-11-01T14:00:00Z" },
+            { "payer": "DANNON", "points": 1000, "timestamp": "2022-11-02T14:00:00Z" }
+        ]}
 
 
 class UserAccount:
@@ -35,6 +45,8 @@ class UserAccount:
         """
         Adds the given transaction into UserAccount.
 
+        :raises InSufficientPoints: raised if we are trying to remove more funds\
+            than we should
         :param transac: transaction to add
         :type transac: TransactionRecord
         """
