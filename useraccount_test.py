@@ -20,7 +20,7 @@ class TestUserAccount(unittest.TestCase):
         assert balance["MILLER COORS"] == 10000
         assert useracc.total_points() == 11300
         spend_summary = useracc.spend(5000)
-        spend_summary = {r.payer: r.points for r in spend_summary}
+        spend_summary = {payer: points for payer, points in spend_summary.items()}
         assert spend_summary["DANNON"] == -100
         assert spend_summary["UNILEVER"] == -200
         assert spend_summary["MILLER COORS"] == -4700
@@ -52,37 +52,31 @@ class TestUserAccount(unittest.TestCase):
         self.assertEqual(balance["DANNON"], 0)
         self.assertEqual(balance["UNILEVER"], 200)
 
-    def test_deficient_before_first_spend(self):
+    def test_more_negative_in_add(self):
         useracc = UserAccount()
         now = datetime.now()
         records = [
             TransactionRecord("DANNON", 200, now - timedelta(0, 5*60)),
             TransactionRecord("UNILEVER", 200, now - timedelta(0, 4*60)),
             TransactionRecord("DANNON", -200, now - timedelta(0)),
-            TransactionRecord("MILLER", -300, now + timedelta(1)),
+            TransactionRecord("DANNON", -100, now - timedelta(0)),
+        ]
+        self.assertRaises(InSufficientPoints, useracc.add, records)
+
+    def test_spend_oldest(self):
+        useracc = UserAccount()
+        now = datetime.now()
+        records = [
+            TransactionRecord("X", 200, now - timedelta(0, 5*60)), # now - 5 minutes
+            TransactionRecord("Y", 200, now - timedelta(0, 4*60)), # now - 4 minutes
+            TransactionRecord("X", -200, now), # now
+            TransactionRecord("Z", 300, now - timedelta(1)), # yesterday same time
         ]
         useracc.add(records)
-        self.assertEqual(useracc.total_points(), -100)
-        self.assertRaises(InSufficientPoints, useracc.spend, 3)
-        # add 102 points to account
-        useracc.add([TransactionRecord("DANNON", 102, now + timedelta(1))])
-        # now total points should be 2, since we had -100 previous
-        self.assertEqual(useracc.total_points(), 2)
-        # we should not be able to spend 3 now
-        self.assertRaises(InSufficientPoints, useracc.spend, 3)
-        # add a transaction with 10 points, but this is less than DANNON-102 by a day
-        useracc.add([TransactionRecord("MILLER", 10, now + timedelta(2))])
-        spend_summary = useracc.spend(3)
+        spend_summary = useracc.spend(301)
+        self.assertEqual(spend_summary, {"Z": -300, "Y": -1})
         balance = useracc.balance()
-        self.assertEqual(balance, {"MILLER", 9})
-        self.assertEqual(useracc.total_points(), 9)
-        self.assertEqual(spend_summary, {"DANNON": 2, "MILLER": 1})
-
-
-
-
-
-
+        self.assertEqual(balance, {"Y": 199})
 
 if __name__ == "__main__":
     unittest.main()

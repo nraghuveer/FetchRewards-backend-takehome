@@ -42,6 +42,9 @@ class UserAccount:
         if transac.points > 0:
             heappush(self._transactions, transac)
         else: # this is a spend, add this pending spend
+            # if this is more than the balance, throw error
+            if -1 * transac.points > self.balance()[transac.payer]:
+                raise InSufficientPoints(f"Cannot add -{transac.points} for payer {transac.payer}")
             self._pending_spends[transac.payer] += -1 * transac.points
 
     def _get_next_transaction_to_spend(self) -> TransactionRecord:
@@ -73,7 +76,7 @@ class UserAccount:
         :return: None
         :rtype: None
         """
-        for transac in new_transactions:
+        for transac in sorted(new_transactions, key=lambda x: -x.points):
             self.__add_transaction(transac)
 
     def balance(self) -> Dict[str, int]:
@@ -87,20 +90,23 @@ class UserAccount:
             d[transac.payer] += transac.points
         for payer, points in self._pending_spends.items():
             d[payer] -= points
+            # if the payer has zero balance, remove it
+            if d[payer] == 0:
+                d.pop(payer)
         return d
 
     def total_points(self) -> int:
         return sum(self.balance().values())
 
-    def spend(self, points: int) -> List[PayerRecord]:
+    def spend(self, points: int) -> Dict[str, int]:
         """
         Spends given points from the useraccount
 
         :param points: points to spend
         :type points: int
         :raises InSufficientPoints: raised when the given total points avaiable are less than the given points
-        :return: list of records which were used to spend the given points
-        :rtype: List[PayerRecord]
+        :return: dictionary of spending summary, where key is payer and value is points spent (in negative, because its spending)
+        :rtype: Dict[str, int]
         """
         if self.total_points() < points:
             raise InSufficientPoints(f"There are no enough points to spend {points} points")
@@ -117,4 +123,8 @@ class UserAccount:
             # if there are any remaining points in the oldest transaction, add them back
             if oldest.points > 0:
                 self.__add_transaction(oldest)
-        return history
+
+        spend_summary: Dict[str, int] = defaultdict(int)
+        for record in history:
+            spend_summary[record.payer] += record.points
+        return spend_summary
