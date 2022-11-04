@@ -3,32 +3,23 @@ from heapq import heappush, heappop
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Dict, List
-from dataclasses import dataclass
+
 
 class InSufficientPoints(Exception):
-    """ raised when there are no enough points to spend """
+    """raised when there are no enough points to spend"""
     pass
 
-@dataclass
+
 class PayerRecord(BaseModel):
     payer: str
     points: int
 
-@dataclass
+
 class TransactionRecord(PayerRecord):
     timestamp: datetime
     # heapq uses this method compare records
-    def __lt__(self, other: 'TransactionRecord') -> bool:
+    def __lt__(self, other: "TransactionRecord") -> bool:
         return self.timestamp < other.timestamp
-
-    class Config:
-        schema_extra={"example": [
-            { "payer": "DANNON", "points": 300, "timestamp": "2022-10-31T10:00:00Z" },
-            { "payer": "UNILEVER", "points": 200, "timestamp": "2022-10-31T11:00:00Z" },
-            { "payer": "DANNON", "points": -200, "timestamp": "2022-10-31T15:00:00Z" },
-            { "payer": "MILLER COORS", "points": 10000, "timestamp": "2022-11-01T14:00:00Z" },
-            { "payer": "DANNON", "points": 1000, "timestamp": "2022-11-02T14:00:00Z" }
-        ]}
 
 
 class UserAccount:
@@ -54,10 +45,12 @@ class UserAccount:
             return
         if transac.points > 0:
             heappush(self._transactions, transac)
-        else: # this is a spend, add this pending spend
+        else:  # this is a spend, add this pending spend
             # if this is more than the balance, throw error
             if -1 * transac.points > self.balance()[transac.payer]:
-                raise InSufficientPoints(f"Cannot add -{transac.points} for payer {transac.payer}")
+                raise InSufficientPoints(
+                    f"Cannot add -{transac.points} for payer {transac.payer}"
+                )
             self._pending_spends[transac.payer] += -1 * transac.points
 
     def _get_next_transaction_to_spend(self) -> TransactionRecord:
@@ -73,7 +66,10 @@ class UserAccount:
 
         oldest = heappop(self._transactions)
         # there are some points that are pending, first remove them and allocate the remaining
-        if oldest.payer in self._pending_spends and self._pending_spends[oldest.payer] > 0:
+        if (
+            oldest.payer in self._pending_spends
+            and self._pending_spends[oldest.payer] > 0
+        ):
             removed = min(self._pending_spends[oldest.payer], oldest.points)
             oldest.points -= removed
             # update the pending for this payer
@@ -128,7 +124,9 @@ class UserAccount:
         :rtype: Dict[str, int]
         """
         if self.total_points() < points:
-            raise InSufficientPoints(f"There are no enough points to spend {points} points")
+            raise InSufficientPoints(
+                f"There are no enough points to spend {points} points"
+            )
 
         history = []
         while points and self._transactions:
@@ -143,5 +141,3 @@ class UserAccount:
             if oldest.points > 0:
                 self.__add_transaction(oldest)
         return self._spend_summary(history)
-
-
