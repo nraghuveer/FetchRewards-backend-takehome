@@ -15,20 +15,13 @@ class TestUserAccount(unittest.TestCase):
         ]
         useracc.add(records)
         balance = useracc.balance()
-        assert balance["DANNON"] == 1100
-        assert balance["UNILEVER"] == 200
-        assert balance["MILLER COORS"] == 10000
+        self.assertEquals(balance, {"DANNON": 1100, "UNILEVER": 200, "MILLER COORS": 10000})
         assert useracc.total_points() == 11300
         spend_summary = useracc.spend(5000)
-        spend_summary = {payer: points for payer, points in spend_summary.items()}
-        assert spend_summary["DANNON"] == -100
-        assert spend_summary["UNILEVER"] == -200
-        assert spend_summary["MILLER COORS"] == -4700
+        self.assertEquals(spend_summary, {"DANNON": -100, "UNILEVER": -200, "MILLER COORS": -4700})
         assert useracc.total_points() == 11300 - 5000
         balance = useracc.balance()
-        assert balance["DANNON"] == 1000
-        assert balance["UNILEVER"] == 0
-        assert balance["MILLER COORS"] == 5300
+        self.assertEquals(balance, {"DANNON": 1000, "MILLER COORS": 5300})
 
     def test_overspending(self):
         useracc = UserAccount()

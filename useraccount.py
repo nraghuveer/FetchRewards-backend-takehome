@@ -5,6 +5,7 @@ from typing import Dict, List
 from dataclasses import dataclass
 
 class InSufficientPoints(Exception):
+    """ raised when there are no enough points to spend """
     pass
 
 @dataclass
@@ -98,6 +99,12 @@ class UserAccount:
     def total_points(self) -> int:
         return sum(self.balance().values())
 
+    def _spend_summary(self, records: List[PayerRecord]) -> Dict[str, int]:
+        spend_summary: Dict[str, int] = defaultdict(int)
+        for record in records:
+            spend_summary[record.payer] += record.points
+        return spend_summary
+
     def spend(self, points: int) -> Dict[str, int]:
         """
         Spends given points from the useraccount
@@ -123,8 +130,6 @@ class UserAccount:
             # if there are any remaining points in the oldest transaction, add them back
             if oldest.points > 0:
                 self.__add_transaction(oldest)
+        return self._spend_summary(history)
 
-        spend_summary: Dict[str, int] = defaultdict(int)
-        for record in history:
-            spend_summary[record.payer] += record.points
-        return spend_summary
+
