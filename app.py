@@ -1,8 +1,7 @@
 import uvicorn
 from typing import List, Dict, TypedDict
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Body
-from fastapi.openapi.utils import get_openapi
+from fastapi import FastAPI, HTTPException
 from useraccount import UserAccount, TransactionRecord, InSufficientPoints
 
 
@@ -21,7 +20,15 @@ def balance() -> Dict[str, int]:
     return useracc.balance()
 
 
-@app.put("/add")
+@app.put("/add", status_code=201, responses={
+        200: {
+            "description": "Successfully added given transactions"
+        },
+        405: {
+            "description": "For a given payer, the spending transaction points is greater than added points",
+            "model": Message,
+        },
+    },)
 def addTransactions(transactions: List[TransactionRecord]) -> None:
     try:
         useracc.add(transactions)
