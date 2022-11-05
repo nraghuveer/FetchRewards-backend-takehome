@@ -1,7 +1,8 @@
 import uvicorn
-from typing import List, Dict, TypedDict
+from typing import List, Dict
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from useraccount import UserAccount, TransactionRecord, InSufficientPoints
 
 
@@ -21,7 +22,7 @@ def balance() -> Dict[str, int]:
 
 
 @app.put("/add", status_code=201, responses={
-        200: {
+        201: {
             "description": "Successfully added given transactions"
         },
         405: {
@@ -33,7 +34,7 @@ def addTransactions(transactions: List[TransactionRecord]) -> None:
     try:
         useracc.add(transactions)
     except InSufficientPoints as e:
-        raise HTTPException(status_code=405, content={"message": str(e)})
+        return JSONResponse(status_code=405, content={"message": str(e)})
 
 
 @app.post(
@@ -54,7 +55,7 @@ def spend(points: int):
     try:
         return useracc.spend(points)
     except InSufficientPoints as e:
-        raise HTTPException(status_code=405, content={"message": str(e)})
+        return JSONResponse(status_code=405, content={"message": str(e)})
 
 
 if __name__ == "__main__":

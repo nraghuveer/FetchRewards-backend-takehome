@@ -2,5 +2,8 @@ app:
 	python src/app.py
 test:
 	python src/useraccount_test.py
-packages:
-	pip install -r requirements.txt
+package:
+	pip install -r src/requirements.txt
+docker:
+	docker build -t raghuveer-backend-takehome:1.0 .
+	docker run -it -p 8001:8001 raghuveer-backend-takehome:1.0
