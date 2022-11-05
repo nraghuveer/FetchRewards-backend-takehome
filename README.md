@@ -2,6 +2,23 @@
 FetchRewards Backend Engineering take-home assignment
 
 
+# Running the project
+
+### If python >= 3.7 is installed locally
+1. cd into the project root (where the make file is)
+2. Build the package using `make package`, this will install the required python packages
+3. Run the unittests using `make test`
+4. Start the app using `make app`
+5. This should start the HTTP server on port 8001
+6. Go to [Docs](http://localhost:8001/docs)
+7. This opens Swagger docs, where we can trigger the endpoints using the UI
+
+### If python is not installed locally, below is the docker solution
+1. Make sure docker daemon is started and running
+2. Run `make docker`, this will build a image and spinup the container
+3. Go to [Docs](http://localhost:8001/docs)
+4. This opens Swagger docs, where we can trigger the endpoints using the UI
+
 # Testing
 
 ```

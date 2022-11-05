@@ -1,5 +1,5 @@
 app:
-	python src/app.py
+	python src/main.py
 test:
 	python src/useraccount_test.py
 package:
