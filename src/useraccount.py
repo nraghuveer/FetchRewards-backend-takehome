@@ -137,7 +137,7 @@ class UserAccount:
                 continue
             spent = min(points, oldest.points)
             points -= spent
-            history.append(PayerRecord(oldest.payer, -spent))
+            history.append(PayerRecord(payer=oldest.payer, points=-spent))
             oldest.points -= spent
             # if there are any remaining points in the oldest transaction, add them back
             if oldest.points > 0:

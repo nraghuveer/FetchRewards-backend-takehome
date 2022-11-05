@@ -7,11 +7,11 @@ class TestUserAccount(unittest.TestCase):
         useracc = UserAccount()
         now = datetime.now()
         records = [
-            TransactionRecord("DANNON", 300, now - timedelta(0, 5*60)),
-            TransactionRecord("UNILEVER", 200, now - timedelta(0, 4*60)),
-            TransactionRecord("DANNON", -200, now - timedelta(0)),
-            TransactionRecord("MILLER COORS", 10000, now + timedelta(1)),
-            TransactionRecord("DANNON", 1000, now + timedelta(2)),
+            TransactionRecord(payer="DANNON", points=300, timestamp=now - timedelta(0, 5*60)),
+            TransactionRecord(payer="UNILEVER", points=200, timestamp=now - timedelta(0, 4*60)),
+            TransactionRecord(payer="DANNON", points=-200, timestamp=now - timedelta(0)),
+            TransactionRecord(payer="MILLER COORS", points=10000, timestamp=now + timedelta(1)),
+            TransactionRecord(payer="DANNON", points=1000, timestamp=now + timedelta(2)),
         ]
         useracc.add(records)
         balance = useracc.balance()
@@ -27,10 +27,10 @@ class TestUserAccount(unittest.TestCase):
         useracc = UserAccount()
         now = datetime.now()
         records = [
-            TransactionRecord("DANNON", 200, now - timedelta(0, 5*60)),
-            TransactionRecord("UNILEVER", 200, now - timedelta(0, 4*60)),
-            TransactionRecord("DANNON", -200, now - timedelta(0)),
-            TransactionRecord("MILLER", 100, now + timedelta(1)),
+            TransactionRecord(payer="DANNON", points=200, timestamp=now - timedelta(0, 5*60)),
+            TransactionRecord(payer="UNILEVER", points=200, timestamp=now - timedelta(0, 4*60)),
+            TransactionRecord(payer="DANNON", points=-200, timestamp=now - timedelta(0)),
+            TransactionRecord(payer="MILLER", points=100, timestamp=now + timedelta(1)),
         ]
         useracc.add(records)
         assert useracc.total_points() == 300
@@ -49,10 +49,10 @@ class TestUserAccount(unittest.TestCase):
         useracc = UserAccount()
         now = datetime.now()
         records = [
-            TransactionRecord("DANNON", 200, now - timedelta(0, 5*60)),
-            TransactionRecord("UNILEVER", 200, now - timedelta(0, 4*60)),
-            TransactionRecord("DANNON", -200, now - timedelta(0)),
-            TransactionRecord("DANNON", -100, now - timedelta(0)),
+            TransactionRecord(payer="DANNON", points=200, timestamp=now - timedelta(0, 5*60)),
+            TransactionRecord(payer="UNILEVER", points=200, timestamp=now - timedelta(0, 4*60)),
+            TransactionRecord(payer="DANNON", points=-200, timestamp=now - timedelta(0)),
+            TransactionRecord(payer="DANNON", points=-100, timestamp=now - timedelta(0)),
         ]
         self.assertRaises(InSufficientPoints, useracc.add, records)
 
@@ -60,10 +60,10 @@ class TestUserAccount(unittest.TestCase):
         useracc = UserAccount()
         now = datetime.now()
         records = [
-            TransactionRecord("X", 200, now - timedelta(0, 5*60)), # now - 5 minutes
-            TransactionRecord("Y", 200, now - timedelta(0, 4*60)), # now - 4 minutes
-            TransactionRecord("X", -200, now), # now
-            TransactionRecord("Z", 300, now - timedelta(1)), # yesterday same time
+            TransactionRecord(payer="X", points=200, timestamp=now - timedelta(0, 5*60)), # now - 5 minutes
+            TransactionRecord(payer="Y", points=200, timestamp=now - timedelta(0, 4*60)), # now - 4 minutes
+            TransactionRecord(payer="X", points=-200, timestamp=now), # now
+            TransactionRecord(payer="Z", points=300, timestamp=now - timedelta(1)), # yesterday same time
         ]
         useracc.add(records)
         spend_summary = useracc.spend(301)
