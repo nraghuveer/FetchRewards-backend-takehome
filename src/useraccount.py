@@ -7,7 +7,6 @@ from typing import Dict, List
 
 class InSufficientPoints(Exception):
     """raised when there are no enough points to spend"""
-
     pass
 
 
@@ -47,7 +46,7 @@ class UserAccount:
             return
         if transac.points > 0:
             heappush(self._transactions, transac)
-        else:  # this is a spend, add this pending spend
+        else:  # this is a spend, add this to pending spends
             # if this is more than the balance, throw error
             if -1 * transac.points > self.balance()[transac.payer]:
                 raise InSufficientPoints(
@@ -107,9 +106,22 @@ class UserAccount:
         return d
 
     def total_points(self) -> int:
+        """Returns total avaiable points in the account
+
+        :return: points
+        :rtype: int
+        """
         return sum(self.balance().values())
 
     def _spend_summary(self, records: List[PayerRecord]) -> Dict[str, int]:
+        """Given list of payer records used to spend,
+        returns the breakdown of payer: points in form of dictionary
+
+        :param records: records used in the spend transaction
+        :type records: List[PayerRecord]
+        :return: breakdown of spending of points per payer
+        :rtype: Dict[str, int]
+        """
         spend_summary: Dict[str, int] = defaultdict(int)
         for record in records:
             spend_summary[record.payer] += record.points
@@ -133,6 +145,7 @@ class UserAccount:
         history = []
         while points and self._transactions:
             oldest = self._get_next_transaction_to_spend()
+            # this transaction doesnt have any points, get the next one
             if oldest.points == 0:
                 continue
             spent = min(points, oldest.points)

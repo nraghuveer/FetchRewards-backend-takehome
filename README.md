@@ -1,6 +1,7 @@
 # FetchRewards-backend-takehome
 FetchRewards Backend Engineering take-home assignment
 
+### [Design Doc](./design-doc.md)
 
 # Running the project
 
@@ -21,6 +22,7 @@ FetchRewards Backend Engineering take-home assignment
 
 # Testing
 
+Testing Payload for the `add` transaction
 ```
 [
     {
